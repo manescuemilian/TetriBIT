@@ -1,0 +1,34 @@
+Manescu Emilian-Claudiu, 313CB
+
+Programul se bazeaza pe folosirea a 4 functii: afisarea hartii, calculul numarului de zerouri din harta, calculul numarului de linii complete din harta la un moment dat si eliminarea liniilor complete. Ce au in comun toate aceste functii este ca toate primesc ca parametru numarul care va reprezenta harta.
+
+Pentru integrarea si mutarea pieselor pe harta, am decis sa folosesc functia main, deoarece am presupus ca fiecarei rulari a programului ii corespunde un singur joc, deci nu ar fi nevoie de o reapelare a eventualei functii de integrare.
+
+Am ales sa folosesc functii deoarece organizeaza mult mai eficient codul si ofera posibilitatea refolosirii cu usurinta a unor intinse portiuni de program.
+
+Am inclus bibliotecile:
+- math.h, pentru calcularea scorului
+- inttypes.h, pentru a stoca numerele pe 64 de biti (exemplu: uint64_t, int64_t)
+-stdlib.h, pentru a calcula valoarea absoluta a mutarii (in cazul in care se dau valori negative pentru mutarea unei piese)
+
+Functia de afisare a hartii compara numarul-harta cu numarul care are 1 pe ultimul bit si 0 in rest. Pentru a stabili daca bitul numarului-harta este setat, folosim operatia AND intre cele doua variabile, iar pentru a continua sa verificam si urmatorii biti ai numarului, shiftam la stanga cu o pozitie. Dupa fiecare 8 biti verificati, trecem la urmatoarea linie a hartii.
+
+Functia de calcul al numarului de zerouri, folosita in calcularea scorului, foloseste o metoda asemanatoare cu cea din functia de afisare, parcurgand fiecare bit al numarului si facand operatia AND cu masca 1ul << 63. Daca bitul respectiv nu e setat, contorul va creste cu 1, dupa care shiftam numarul la stanga cu o pozitie.
+
+Functia de calcul al numarului de linii complete foloseste de asemenea operatia AND pentru a vedea daca pe o linie toti cei 8 biti sunt setati. Numarul se parcurge cu doua for-uri. Pozitia unui bit in cadrul numarului harta este de forma j + i * 8, in care i este linia pe care se afla bitul, iar j coloana.
+
+Functia de eliminare este mai complexa, dar foloseste acelasi algoritm de gasire a unei linii complete ca la functia precedenta. Se calculeaza pozitia de unde incepe linia completa (de forma i * 8). Daca chiar prima linie este completa, o simpla shiftare la dreapta cu 8 pozitii va elimina linia. Daca este vorba de alta linie, se va crea o masca cu 1 pana la inceputul liniei complete si 0 in rest. Variabila copie_linii are rolul de a retine liniile pana la linia completa, iar in rest va avea doar 1 (valorile de 1 din variabila copie_linii sunt setate prin for-ul cu variabila t). Variabila copie_harta pastreaza cealalta parte a numarului, de mai sus de linia completa, avand 1 in rest. 
+Spre exemplu, daca a treia linie este completa, variabila copie_linii va avea primele doua linii ale numarului, iar in rest 1. Variabila copie_harta va avea initial primele 3 linii doar cu biti de 1, iar in rest liniile 4-8 ale numarului-harta. Shiftarea cu 8 pozitii a copiei elimina una dintre cele 3 linii complete ale sale, iar prin operatia AND intre cele doua variabile, se obtine numarul dupa eliminarea liniei complete. Harta nu se afiseaza decat dupa toate liniile complete au fost sterse. 
+La parametrii functiei, am folosit numarul ca pointer, pentru a nu pierde modificarile aduse numarului atunci cand functia si-a incheiat executia.
+
+Citirea pieselor si a mutarilor corespunzatoare are loc in functia main. Pentru a le stoca, am folosit o matrice in care pe prima coloana se afla piesele, iar pe celelalte mutarile lor. Am inceput numerotarea de la -1 pentru ca pentru parcurgerea mutarilor nu aveam nevoie de coloana pieselor si am considerat mai convenient sa incep for-urile de la 0, si nu de la 1.
+
+Urmeaza cele doua for-uri. Se verifica daca piesa se muta spre stanga, spre dreapta sau deloc. Fiecare mutare a piesei inseamna coborarea pe harta, iar prima instructiune din for-ul j are rolul mai intai de a urca piesa pe ultima linie, apoi de a o cobori periodic. Am folosit doua variabile care vor verifica daca piesa ajunge la peretele din stanga sau din dreapta al hartii (st si dr).
+
+Pentru cazurile in care mutarea este la stanga sau la dreapta, se verifica (in while-uri) daca piesa atinge peretii hartii, daca poate fi integrata hartii si se deplaseaza piesa in directia indicata. Daca dupa mutarea cu o pozitie a piesei (piesa >>= 1), piesa intra in coliziune, se revine la pozitia de dinainte si se trece la integrarea in harta si la afisarea hartii (instructiunea goto). Instructiunea piesa = piesa & debug a fost introdusa deoarece mutarea spre dreapta a unei piese care ocupa initial ultimul bit al hartii ar fi lasat acel bit setat. Variabila copie are rolul de a salva harta corecta dupa fiecare mutare. 
+
+In cazul in care piesa a ajuns la o coliziune, se trateaza cazul special in care piesa nu intra in harta complet. Conditia j == 0 este suficienta pentru orice tip de piesa, dar piesele care ocupa doua linii pot avea coliziune, fara a intra complet in harta, si la a doua mutare. Piesele pe doua linii se reprezinta pe 16 biti, deci sunt mai mari de 255. Break-urile din program au rolul de a trece la urmatoarea piesa daca are loc o coliziune. Pentru incheierea jocului, care coincide cu afisarea scorului, am folosit instructiunea goto final pentru a sari peste for-uri, ignorand astfel mutarile urmatoare.
+
+Totusi, dupa ce piesa a fost integrata in harta ramane salvata si mutarea precedenta, iar stergerea mutarii precedente are loc prin operatia AND intre actualul numar si numarul obtinut la sfarsitul integrarii piesei precedente (copie_numar). Aceasta actualizare nu mai are loc pentru ultima mutare a piesei (deci se aplica instructiunea break), deoarece in acest fel aceasta s-ar pierde si copie_numar ar ramane mereu egala cu numarul initial.
+
+For-ul u parcurge toate cele 8 linii si le elimina pe cele complete, apoi se trece la calcularea si afisarea scorului.
